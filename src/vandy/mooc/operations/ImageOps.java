@@ -51,7 +51,7 @@ public class ImageOps {
      * Used to enable garbage collection.
      */
     WeakReference<MainActivity> mActivity;
-    	
+
     /**
      * EditText field for entering the desired URL to an image.
      */
@@ -71,24 +71,24 @@ public class ImageOps {
      * Stores an instance of ServiceResultHandler.
      */
     public Handler mServiceResultHandler = null;
-        
+
     /**
      * Stores the running total number of images downloaded that must
      * be handled by ServiceResultHandler.
      */
     public int mNumImagesToHandle;
-    
+
     /**
      * Stores the running total number of images that have been
      * handled by the ServiceResultHandler.
      */
     public int mNumImagesHandled;
-    
+
     /**
      * Stores the directory to be used for all downloaded images.
      */
     public String mDirectoryPathname = null;
-    
+
     /**
      * Array of Strings that represent the valid URLs that have
      * been entered.
@@ -104,25 +104,25 @@ public class ImageOps {
 
         // Initialize the downloadHandler.
         mServiceResultHandler =
-            new ServiceResultHandler(mActivity.get());
-                
+                new ServiceResultHandler(mActivity.get());
+
         // Create a timestamp that will be unique.
         final String timestamp =
-            new SimpleDateFormat("yyyyMMdd'_'HHmm").format(new Date());
+                new SimpleDateFormat("yyyyMMdd'_'HHmm").format(new Date());
 
         // Use the timestamp to create a pathname for the directory
         // that stores downloaded images.
         mDirectoryPathname = Environment.getExternalStoragePublicDirectory
-            (Environment.DIRECTORY_DCIM)
-            + "/" + timestamp + "/";
-        
+                (Environment.DIRECTORY_DCIM)
+                + "/" + timestamp + "/";
+
         // Initialize the list of URLs.
         mUrlList = new ArrayList<String>();
 
         // Finish the initialization steps.
         initializeViewFields();
         resetNonViewFields();
-    }        
+    }
 
     /**
      * Initialize all the View fields.
@@ -130,16 +130,16 @@ public class ImageOps {
     private void initializeViewFields() {
         // Store the ProgressBar in a field for fast access.
         mLoadingProgressBar = (ProgressBar)
-            mActivity.get().findViewById(R.id.progressBar_loading);
-            
+                mActivity.get().findViewById(R.id.progressBar_loading);
+
         // Store the EditText that holds the urls entered by the user
         // (if any).
-        mUrlEditText = 
-            (EditText) mActivity.get().findViewById(R.id.url);
+        mUrlEditText =
+                (EditText) mActivity.get().findViewById(R.id.url);
 
         // Store the linear layout displaying URLs entered.
-        mLinearLayout = 
-            (LinearLayout) mActivity.get().findViewById(R.id.linearLayout);
+        mLinearLayout =
+                (LinearLayout) mActivity.get().findViewById(R.id.linearLayout);
     }
 
     /**
@@ -157,13 +157,14 @@ public class ImageOps {
      * Start all the downloads.
      */
     public void startDownloads() {
+        Log.d(TAG, "startDownloads+");
         // Hide the keyboard.
         Utils.hideKeyboard(mActivity.get(),
-                           mUrlEditText.getWindowToken());
+                mUrlEditText.getWindowToken());
 
         if (mUrlList.isEmpty())
             Utils.showToast(mActivity.get(),
-                            "no images provided");
+                    "no images provided");
         else {
             // Make the progress bar visible.
             mLoadingProgressBar.setVisibility(View.VISIBLE);
@@ -176,25 +177,29 @@ public class ImageOps {
             for (String urlString : mUrlList)
                 startDownload(Uri.parse(urlString));
         }
+        Log.d(TAG, "startDownloads-");
     }
 
     /**
      * Start a download.
      */
     private void startDownload(Uri url) {
+        Log.d(TAG, "startDownload(Uri " + url + ")+");
         // Create an intent to download the image.
         Intent intent =
-            DownloadImageService.makeIntent(mActivity.get(),
-                                            OperationType.DOWNLOAD_IMAGE.ordinal(),
-                                            url,
-                                            mDirectoryPathname,
-                                            mServiceResultHandler);
+                DownloadImageService.makeIntent(mActivity.get(),
+                        OperationType.DOWNLOAD_IMAGE.ordinal(),
+                        url,
+                        mDirectoryPathname,
+                        mServiceResultHandler);
         Log.d(TAG,
-              "starting the DownloadImageService for "
-              + url.toString());
+                "starting the DownloadImageService for "
+                        + url.toString());
+        Log.d(TAG, "startDownload startService intent " + intent);
 
         // Start the service.
         mActivity.get().startService(intent);
+        Log.d(TAG, "startDownload(Uri " + url + ")-");
     }
 
     /**
@@ -203,22 +208,26 @@ public class ImageOps {
     public void doResult(int requestCode,
                          int resultCode,
                          Bundle data) {
+        Log.d(TAG, "doResult(int " + requestCode + "\n" +
+                "int " + resultCode + "\n" +
+                "Bundle " + data + ")+");
         // Increment the number of images handled regardless of
         // whether this result succeeded or failed to download and
         // image.
         ++mNumImagesHandled;
 
-        if (resultCode == Activity.RESULT_CANCELED) 
+        if (resultCode == Activity.RESULT_CANCELED)
             // Handle a failed download.
             handleDownloadFailure(data);
         else /* resultCode == Activity.RESULT_OK) */
             // Handle a successful download.
             Log.d(TAG,
-                  "received image at URI "
-                  + DownloadImageService.getImagePathname(data));
-                
+                    "received image at URI "
+                            + DownloadImageService.getImagePathname(data));
+
         // Try to display all images received successfully.
         tryToDisplayImages(data);
+        Log.d(TAG, "doResult-");
     }
 
     /**
@@ -240,9 +249,9 @@ public class ImageOps {
             // Note that if the directory is empty, File.listFiles()
             // returns null.
             File file = new File(mDirectoryPathname);
-            if (file.isDirectory() 
-                && file.listFiles() != null 
-                && file.listFiles().length > 0) {
+            if (file.isDirectory()
+                    && file.listFiles() != null
+                    && file.listFiles().length > 0) {
                 // Create an Activity for displaying the images.
                 final Intent intent =
                         DisplayImagesActivity.makeIntent
@@ -256,18 +265,19 @@ public class ImageOps {
                 mActivity.get().startActivity(intent);
             }
         }
-    }  
+    }
 
     /**
      * Handle failure to download an image.
      */
     public void handleDownloadFailure(Bundle data) {
+        Log.d(TAG, "handleDownloadFailure(Bundle " + data + ")+");
         // Extract the URL from the message.
         final String url =
-            DownloadImageService.getImageURL(data);
-            
+                DownloadImageService.getImageURL(data);
+
         Utils.showToast(mActivity.get(),
-                        "image at " 
+                "image at "
                         + url
                         + " failed to download!");
 
@@ -278,6 +288,7 @@ public class ImageOps {
             // Dismiss the progress bar.
             mLoadingProgressBar.setVisibility(View.INVISIBLE);
         }
+        Log.d(TAG, "handleDownloadFailure-");
     }
 
     /**
@@ -285,7 +296,7 @@ public class ImageOps {
      */
     public boolean allDownloadsComplete() {
         return mNumImagesHandled == mNumImagesToHandle
-            && mNumImagesHandled > 0;
+                && mNumImagesHandled > 0;
     }
 
     /**
@@ -295,7 +306,7 @@ public class ImageOps {
         return mNumImagesToHandle > 0;
     }
 
-   /**
+    /**
      * Add whatever URL has been entered into the text field if that
      * URL is valid when user presses the "Add URL" button in UI.
      */
@@ -306,13 +317,13 @@ public class ImageOps {
         if (URLUtil.isValidUrl(url)) {
             // Add valid URL to running list for download.
             mUrlList.add
-                (mUrlEditText.getText().toString());
+                    (mUrlEditText.getText().toString());
 
             // (Re)display all the URLs.
             displayUrls();
-    	} else 
+        } else
             Utils.showToast(mActivity.get(),
-                            "Invalid URL" 
+                    "Invalid URL"
                             + url);
     }
 
@@ -349,11 +360,11 @@ public class ImageOps {
 
         // Add a each URL list entry as a text view child of the
         // parent LinearLayout.
-        for (String url: mUrlList) {
+        for (String url : mUrlList) {
             TextView urlTextView = new TextView(mActivity.get());
             urlTextView.setLayoutParams
-                (new LayoutParams(LayoutParams.WRAP_CONTENT,
-                                  LayoutParams.WRAP_CONTENT));
+                    (new LayoutParams(LayoutParams.WRAP_CONTENT,
+                            LayoutParams.WRAP_CONTENT));
             urlTextView.setText(url);
             mLinearLayout.addView(urlTextView);
         }
@@ -367,12 +378,12 @@ public class ImageOps {
      */
     public void deleteDownloadedImages() {
         // Delete all the downloaded image.
-        int fileCount = deleteFiles(mDirectoryPathname, 
-                                    0);
+        int fileCount = deleteFiles(mDirectoryPathname,
+                0);
 
         // Indicate how many files were deleted.
         Utils.showToast(mActivity.get(),
-                        fileCount
+                fileCount
                         + " downloaded image"
                         + (fileCount == 1 ? " was" : "s were")
                         + " deleted.");
@@ -387,24 +398,24 @@ public class ImageOps {
      */
     private Integer deleteFiles(String directoryPathname,
                                 int fileCount) {
-        File imageDirectory = new File(directoryPathname);        
+        File imageDirectory = new File(directoryPathname);
         File files[] = imageDirectory.listFiles();
 
-        if (files == null) 
+        if (files == null)
             return fileCount;
 
         // Android does not allow you to delete a directory with child
         // files, so we need to write code that handles this
         // recursively.
-        for (File f : files) {          
-            if (f.isDirectory()) 
-                fileCount += deleteFiles(f.toString(), 
-                                         fileCount);
+        for (File f : files) {
+            if (f.isDirectory())
+                fileCount += deleteFiles(f.toString(),
+                        fileCount);
             Log.d(TAG,
-                  "deleting file "
-                  + f.toString()
-                  + " with count "
-                  + fileCount);
+                    "deleting file "
+                            + f.toString()
+                            + " with count "
+                            + fileCount);
             ++fileCount;
             f.delete();
         }
@@ -425,8 +436,8 @@ public class ImageOps {
         // the handler to update its outdated weak reference to the
         // ServiceResult callback implementation instance.
         if (mServiceResultHandler != null) {
-            ((ServiceResultHandler)mServiceResultHandler)
-                .onConfigurationChange(mActivity.get());
+            ((ServiceResultHandler) mServiceResultHandler)
+                    .onConfigurationChange(mActivity.get());
         }
 
         // (Re)initialize all the View fields.
@@ -438,13 +449,13 @@ public class ImageOps {
             // Hide the progress bar.
             mLoadingProgressBar.setVisibility(View.INVISIBLE);
             Log.d(TAG,
-                  "All images have finished downloading");
+                    "All images have finished downloading");
         } else if (downloadsInProgress()) {
             // Display the progress bar.
             mLoadingProgressBar.setVisibility(View.VISIBLE);
 
             Log.d(TAG,
-                  "Not all images have finished downloading");
+                    "Not all images have finished downloading");
         }
 
         // (Re)display the URLs.

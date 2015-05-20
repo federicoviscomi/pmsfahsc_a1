@@ -4,6 +4,7 @@ import vandy.mooc.R;
 import vandy.mooc.operations.ImageOps;
 import vandy.mooc.utils.RetainedFragmentManager;
 import vandy.mooc.utils.ServiceResult;
+
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -20,14 +21,14 @@ import android.view.View;
  * robustly.
  */
 public class MainActivity extends LifecycleLoggingActivity
-                          implements ServiceResult {
+        implements ServiceResult {
     /**
      * Used to retain the ImageOps state between runtime configuration
      * changes.
      */
-    protected final RetainedFragmentManager mRetainedFragmentManager = 
-        new RetainedFragmentManager(this.getFragmentManager(),
-                                    TAG);
+    protected final RetainedFragmentManager mRetainedFragmentManager =
+            new RetainedFragmentManager(this.getFragmentManager(),
+                    TAG);
 
     /**
      * Provides image-related operations.
@@ -62,25 +63,25 @@ public class MainActivity extends LifecycleLoggingActivity
         // Activity has been created.
         if (mRetainedFragmentManager.firstTimeIn()) {
             Log.d(TAG,
-                  "First time onCreate() call");
+                    "First time onCreate() call");
 
             // Create the ImageOps object one time.
             mImageOps = new ImageOps(this);
 
             // Store the ImageOps into the RetainedFragmentManager.
             mRetainedFragmentManager.put("IMAGE_OPS_STATE",
-                                         mImageOps);
-            
+                    mImageOps);
+
         } else {
             Log.d(TAG,
-                  "Second or subsequent onCreate() call");
+                    "Second or subsequent onCreate() call");
 
             // The RetainedFragmentManager was previously initialized,
             // which means that a runtime configuration change
             // occured, so obtain the ImageOps object and inform it
             // that the runtime configuration change has completed.
-            mImageOps = 
-                mRetainedFragmentManager.get("IMAGE_OPS_STATE");
+            mImageOps =
+                    mRetainedFragmentManager.get("IMAGE_OPS_STATE");
 
             // This check shouldn't be necessary under normal
             // circumtances, but it's better to lose state than to
@@ -92,9 +93,8 @@ public class MainActivity extends LifecycleLoggingActivity
                 // Store the ImageOps into the
                 // RetainedFragmentManager.
                 mRetainedFragmentManager.put("IMAGE_OPS_STATE",
-                                             mImageOps);
-            }            
-            else 
+                        mImageOps);
+            } else
                 // Inform it that the runtime configuration change has
                 // completed.
                 mImageOps.onConfigurationChange(this);
@@ -108,7 +108,9 @@ public class MainActivity extends LifecycleLoggingActivity
      * @param view The view.
      */
     public void downloadImages(View view) {
+        Log.d(TAG, "downloadImages+");
         mImageOps.startDownloads();
+        Log.d(TAG, "downloadImages-");
     }
 
     /**
@@ -126,7 +128,7 @@ public class MainActivity extends LifecycleLoggingActivity
     public void deleteDownloadedImages(View view) {
         mImageOps.deleteDownloadedImages();
     }
-	
+
     /**
      * Hook method called back by the ServiceResultHandler when a
      * Service that's been launched finishes, giving the requestCode
@@ -137,9 +139,13 @@ public class MainActivity extends LifecycleLoggingActivity
     public void onServiceResult(int requestCode,
                                 int resultCode,
                                 Bundle data) {
+        Log.d(TAG, "onServiceResult(int " + requestCode + "\n" +
+                "int " + resultCode + "\n" +
+                "Bundle " + data + ")+");
         // Handle the results.
         mImageOps.doResult(requestCode,
-                           resultCode,
-                           data);
+                resultCode,
+                data);
+        Log.d(TAG, "onServiceResult-");
     }
 }

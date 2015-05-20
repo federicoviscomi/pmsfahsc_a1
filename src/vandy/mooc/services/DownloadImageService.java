@@ -1,10 +1,13 @@
 package vandy.mooc.services;
 
 import vandy.mooc.utils.Utils;
+
 import android.app.Activity;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -12,6 +15,9 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
+
+import java.io.InputStream;
+import java.net.URL;
 
 /**
  * An IntentService that downloads an image requested via data in an
@@ -23,7 +29,7 @@ public class DownloadImageService extends IntentService {
     /**
      * Debugging tag used by the Android logger.
      */
-    private final String TAG = getClass().getSimpleName();
+    private final static String TAG = DownloadImageService.class.getSimpleName();
 
     /**
      * String constant used to extract the Messenger "extra" from an
@@ -53,30 +59,49 @@ public class DownloadImageService extends IntentService {
      * to store a downloaded image.
      */
     private static final String DIRECTORY_PATHNAME = "DIRECTORY_PATHNAME";
-    
+
     public DownloadImageService() {
-    	super("DownloadImageService");
+        super("DownloadImageService");
+        Log.d(TAG, "DownloadImageService");
     }
 
     /**
      * Factory method that returns an Intent for downloading an image.
      */
     public static Intent makeIntent(Context context,
-                                    int requestCode, 
+                                    int requestCode,
                                     Uri url,
                                     String directoryPathname,
                                     Handler downloadHandler) {
+        Log.d(TAG, "makeIntent(Context " + context + "\n" +
+                "int " + requestCode + "\n" +
+                "Uri " + url + "\n" +
+                "String " + directoryPathname + "\n" +
+                "Handler " + downloadHandler + ")+ ");
+        // TODO - done
+
         // Create an intent that will download the image from the web.
-    	// TODO -- you fill in here, replacing "null" with the proper
-    	// code, which involves (1) setting the URL as "data" to the
-    	// intent, (2) putting the request code as an "extra" to the
-    	// intent, (3) creating and putting a Messenger as an "extra"
-    	// to the intent so the DownloadImageService can send the path
-    	// to the image file back to the MainActivity, and (3) putting
-    	// the directory pathname as an "extra" to the intent
+        Intent downloadImageFromTheWebIntent = new Intent(context, DownloadImageService.class);
+
+        // (1) setting the URL as "data" to the intent
+        downloadImageFromTheWebIntent.setData(url);
+
+        // (2) putting the request code as an "extra" to the intent
+        downloadImageFromTheWebIntent.putExtra(REQUEST_CODE, requestCode);
+
+        // (3) creating and putting a Messenger as an "extra"
+        // to the intent so the DownloadImageService can send the path
+        // to the image file back to the MainActivity
+        Messenger messenger = new Messenger(downloadHandler);
+        downloadImageFromTheWebIntent.putExtra(MESSENGER, messenger);
+
+        // (4) putting the directory pathname as an "extra" to the intent
         // to tell the Service where to place the image within
         // external storage.
-        return null;
+        downloadImageFromTheWebIntent.putExtra(DIRECTORY_PATHNAME, directoryPathname);
+
+        Log.d(TAG, "makeIntent- " + downloadImageFromTheWebIntent);
+        return downloadImageFromTheWebIntent;
     }
 
     /**
@@ -90,10 +115,10 @@ public class DownloadImageService extends IntentService {
     }
 
     public static int getResultCode(Message message) {
-      // Check to see if the download succeeded.
-      return message.arg1;
+        // Check to see if the download succeeded.
+        return message.arg1;
     }
-    
+
     /**
      * Helper method that returns the request code associated with
      * the @a message.
@@ -125,38 +150,57 @@ public class DownloadImageService extends IntentService {
      */
     @Override
     public void onHandleIntent(Intent intent) {
+        Log.d(TAG, "onHandleIntent(Intent " + intent + ")+");
         // Get the URL associated with the Intent data.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        Uri imageUri = intent.getData();
 
         // Get the directory pathname where the image will be stored.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        Bundle intentExtras = intent.getExtras();
+        String directoryPathname = intentExtras.getString(DIRECTORY_PATHNAME);
 
         // Download the requested image.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        Uri imagePathname =
+                Utils.downloadImage(getApplicationContext(), imageUri, directoryPathname);
 
         // Extract the Messenger stored as an extra in the
         // intent under the key MESSENGER.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        Messenger messenger = (Messenger) intentExtras.get(MESSENGER);
 
         // Send the path to the image file back to the
         // MainActivity via the messenger.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        this.sendPath(messenger, imagePathname, imageUri);
+        Log.d(TAG, "onHandleIntent(Intent " + intent + ")-");
     }
 
     /**
      * Send the pathname back to the MainActivity via the
      * messenger.
      */
-    private void sendPath(Messenger messenger, 
+    private void sendPath(Messenger messenger,
                           Uri pathToImageFile,
                           Uri url) {
+        Log.d(TAG, "sendPath(Messenger " + messenger + "\n" +
+                "Uri " + pathToImageFile + "\n" +
+                "Uri " + url + ")+");
         // Call the makeReplyMessage() factory method to create
         // Message.
-        // @@ TODO -- you fill in here.
-        
-            // Send the path to the image file back to the
-            // MainActivity.
-            // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        Message message = makeReplyMessage(pathToImageFile, url);
+
+        // Send the path to the image file back to the
+        // MainActivity.
+        // @@ TODO -- done
+        try {
+            messenger.send(message);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        Log.d(TAG, "sendPath-");
     }
 
     /**
@@ -165,27 +209,42 @@ public class DownloadImageService extends IntentService {
      */
     private Message makeReplyMessage(Uri pathToImageFile,
                                      Uri url) {
+        Log.d(TAG, "makeReplyMessage(Uri " + pathToImageFile + "\n" +
+                "Uri " + url + ")+");
         // Get a message via the obtain() factory method.
         Message message = Message.obtain();
 
         // Create a new Bundle to handle the result.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        Bundle dataBundle = new Bundle();
 
         // Put the URL to the image file into the Bundle via the
         // IMAGE_URL key.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        dataBundle.putString(IMAGE_URL, url.toString());
 
         // Return the result to indicate whether the download
         // succeeded or failed.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        if (null == pathToImageFile) {
+            message.arg1 = Activity.RESULT_CANCELED;
+        } else {
+            message.arg1 = Activity.RESULT_OK;
+        }
 
         // Put the path to the image file into the Bundle via the
         // IMAGE_PATHNAME key only if the download succeeded.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        if (null != pathToImageFile) {
+            dataBundle.putString(IMAGE_PATHNAME, pathToImageFile.toString());
+        }
+
 
         // Set the Bundle to be the data in the message.
-        // @@ TODO -- you fill in here.
+        // @@ TODO -- done
+        message.setData(dataBundle);
 
+        Log.d(TAG, "makeReplyMessage- " + message);
         return message;
     }
 }
